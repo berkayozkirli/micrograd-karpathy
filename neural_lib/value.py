@@ -1,3 +1,4 @@
+from math import exp
 class Value:
     # Sinle value
     def __init__(self, data, _children=(), _op=''):
@@ -9,7 +10,7 @@ class Value:
         self._children = _children
         # The operation that produced this value, will be initiliaized in an op function 
         self._op = _op
-
+    # Basic operations
     def __add__(self, other):
         other = other if isinstance(other, Value) else Value(other)
         out = Value(self.data + other.data, (self, other), "+")
@@ -28,7 +29,7 @@ class Value:
         out._backward = _backward
 
         return out
-
+    
     def __pow__(self, other):
         assert isinstance(other, (int, float)), "only supporting int/float powers for now"
         out = Value(self.data**other, (self,), f'**{other}')
@@ -37,7 +38,7 @@ class Value:
         out._backward = _backward
 
         return out
-
+    # Some activation functions
     def relu(self):
         out = Value(0 if self.data < 0 else self.data, (self,), 'ReLU')
         def _backward():
@@ -45,8 +46,27 @@ class Value:
         out._backward = _backward
 
         return out
+    
+    def tanh(self):
+        out = Value((exp(2 * self.data) - 1)/(exp(2 * self.data) + 1), (self,), 'tanh')
+        def _backward():
+            self.grad += (1 - out.data ** 2) * out.grad
+        out._backward = _backward
 
-    # This function topologically sort the tree of operations to find gradients by going backwards
+        return out 
+
+    def sigmoid(self, _beta = 1):
+        out = Value(1/(1 + exp(-1 * _beta * self.data)), (self,), 'sigmoid')
+        def _backward():
+            self.grad += out.data * (_beta - _beta * out.data)
+        out._backward = _backward
+
+        return out
+    
+    def swish(self, _beta = 1):
+        return self.sigmoid(_beta) * self.data 
+
+    # This function topologically sorts the tree of operations to find gradients by going backwards
     def backward(self):
         topologically_sorted = []
         visited = set()

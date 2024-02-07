@@ -1,5 +1,5 @@
 import random
-from value import Value
+from neural_lib.value import Value
 class Module:
     def zero_grad(self):
         for p in self.parameters():
@@ -38,10 +38,11 @@ class Layer(Module):
     def __repr__(self):
         return f"Layer of [{', '.join(str(n) for n in self.neurons)}]"
 
-class MLP(Module):
-    def __init__(self, nin, nouts):
-        sz = [nin] + nouts
-        self.layers = [Layer(sz[i], sz[i+1], nonlin=i!=len(nouts)-1) for i in range(len(nouts))]
+class NeuralNet(Module):
+    # Input and Output dimensions with the layer structure
+    def __init__(self, ninputs, layers, noutputs):
+        dimensions = [ninputs] + layers + [noutputs]
+        self.layers = [Layer(dimensions[i], dimensions[i+1], nonlin=i!=len(layers)) for i in range(len(layers)+1)]
 
     def __call__(self, x):
         for layer in self.layers:
